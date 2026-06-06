@@ -4,7 +4,9 @@ import sys
 
 class Darija:
     
-    def __init__(self):
+    
+    
+    def __init__(self,hadError=False):
         args = sys.argv
         if len(args) - 1 > 1:
             raise Exception("Too many arguments provided. Please provide only the file name.")
@@ -14,6 +16,7 @@ class Darija:
         else:
             self.fileName = None
             self.run_prompt()
+        self.hadError = hadError
         
     
     def runFile(self):
@@ -23,6 +26,10 @@ class Darija:
             content = file.read()
             code = content.decode()
             self.run(code)
+            if self.hadError:
+                print("An error occurred. Exiting.")
+                sys.exit(65)
+            
             print(f"File content:\n{code}")
     
     def run(self,input_code):
@@ -41,9 +48,17 @@ class Darija:
                 print("Exiting prompt mode.")
                 break
             self.run(input_code)
+            if self.hadError:
+                print("An error occurred. Exiting prompt mode.")
+                sys.exit(65)    
+            self.hadError = False
     
-            
-        
+    def error(self,line, message):
+        self.report(line, "", message)
+    
+    def report(self,line, where, message):
+        print(f"[line {line}] Error{where}: {message}")
+        self.hadError = True
         
         
 lang = Darija()
