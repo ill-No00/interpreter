@@ -1,7 +1,24 @@
-from token import Token
-from unittest import case
+from token_t import Token
+from token_type import TokenType
 
-
+keywords = {
+    "and": TokenType.AND,
+    "class": TokenType.CLASS,
+    "wela": TokenType.ELSE,
+    "ghalet": TokenType.FALSE,
+    "dor": TokenType.FOR,
+    "khedma": TokenType.FUN,
+    "yla": TokenType.IF,
+    "walou": TokenType.NIL,
+    "or": TokenType.OR,
+    "akteb": TokenType.PRINT,
+    "rod": TokenType.RETURN,
+    "waled": TokenType.SUPER,
+    "ana": TokenType.THIS,
+    "s7i7": TokenType.TRUE,
+    "metghayer": TokenType.VAR,
+    "madam": TokenType.WHILE,
+}
 
     
 class Scanner:
@@ -14,8 +31,8 @@ class Scanner:
         self.line = 1
         
     def scanTokens(self):
-        self.tokens = scanner(self.source)
-        return self.tokens
+        tokens = self.scanner()
+        return tokens
     
     def scanner(self):
         
@@ -34,61 +51,95 @@ class Scanner:
         
         match c:
             case '(':
-                self.addToken("LEFT_PAREN")
+                self.addToken(TokenType.LEFT_PAREN)
             case ')':
-                self.addToken("RIGHT_PAREN")
+                self.addToken(TokenType.RIGHT_PAREN)
             case '{':
-                self.addToken("LEFT_BRACE")
+                self.addToken(TokenType.LEFT_BRACE)
             case '}':
-                self.addToken("RIGHT_BRACE")
+                self.addToken(TokenType.RIGHT_BRACE)
             case ',': 
-                self.addToken("COMMA")
+                self.addToken(TokenType.COMMA)
             case '.':
-                if self.is_number(self.source[self.current]):
-                    print(f"Invalid Number format at line {self.line}")              
-                else:
-                    self.addToken("DOT")
+                
+                self.addToken(TokenType.DOT)
             case '-':
-                self.addToken("MINUS")
+                self.addToken(TokenType.MINUS)
             case '+':
-                self.addToken("PLUS")
+                self.addToken(TokenType.PLUS)
             case ';':
-                self.addToken("SEMICOLON")
+                self.addToken(TokenType.SEMICOLON)
             case '*':
-                self.addToken("STAR")
+                self.addToken(TokenType.STAR)
             case '!':
-                self.addToken("BANG_EQUAL" if self.match('=') else "BANG")
+                self.addToken(TokenType.BANG_EQUAL if self.match('=') else TokenType.BANG)
             case '=':
-                self.addToken("EQUAL_EQUAL" if self.match('=') else "EQUAL")
+                self.addToken(TokenType.EQUAL_EQUAL if self.match('=') else TokenType.EQUAL)
             case '<':
-                self.addToken("LESS_EQUAL" if self.match('=') else "LESS")
+                self.addToken(TokenType.LESS_EQUAL if self.match('=') else TokenType.LESS)
             case '>':
-                self.addToken("GREATER_EQUAL" if self.match('=') else "GREATER")
+                self.addToken(TokenType.GREATER_EQUAL if self.match('=') else TokenType.GREATER)
             case '/':
                 if self.match('/'):
                     while self.peek() != '\n' and not self.isAtEnd():
                         self.advance()
                 else:
-                    self.addToken("SLASH")
+                    self.addToken(TokenType.SLASH)
             case ' ' | '\r' | '\t':
                 pass
             case '\n':
                 self.line += 1
-            case '"':
-                self.scanTokenstring()
-            
-            case '0'| '1' | '2' |'3' |'4' |'5' |'6' |'7' |'8' |'9':
-                self.scanTokenNum()
+            case '"' | "'":
+                self.scanTokenstring(c)
             
             case _:
-                print(f"Unexpected character: {c} at line {self.line}")
+                if(self.isDegit(c)):
+                    self.number()
+                elif(self.isAlpha(c)):
+                    self.identifier()
+                else : 
+               
+                    print(f"Unexpected character: {c} at line {self.line}")
                 
-    def is_number(num):
-        try:
-            float(num)
-            return True
-        except ValueError:
-            return False
+    
+    def identifier(self):
+        
+        while self.isAlphNumeric(self.peek()):
+            self.advance()
+            
+        text = self.source[self.start : self.current]
+        
+        type = keywords.get(text)
+        
+        if not type :
+            type = TokenType.IDENTIFIER
+            
+        self.addToken(type)
+            
+    def isAlpha(self, c):
+        return ('a' <= c <= 'z') or ('A' <= c <= 'Z') or c == '_'
+            
+        
+    def isAlphNumeric(self,c):
+        return self.isAlpha(c) or self.isDegit(c)
+    
+    def isDegit(self,num):
+        return num >= '0' and num <= '9'
+    
+    def number(self):
+        
+        while self.isDegit(self.peek()):
+            self.advance()
+            
+        if self.peek() == '.' and self.isDegit(self.nextPeek()):
+            
+            self.advance()
+            
+            while self.isDegit(self.peek()) :
+                self.advance()
+        
+        self.addToken(TokenType.NUMBER , float(self.source[self.start : self.current]))
+        
     
     def scanTokenNum(self):
         
@@ -113,18 +164,21 @@ class Scanner:
         return self.source[self.current+1]
         
             
-    def scanTokenstring(self):
+    def scanTokenstring(self ,quote):
         
-        while self.peek() != '"' and not self.isAtEnd : 
+        while self.peek() != quote  and not self.isAtEnd() : 
             if self.peek() == '\n' :
                 self.line+=1
             self.advance()
         
-        if self.isAtEnd:
+        if self.isAtEnd():
             print(f"unterminated string at line {self.line}")
         
-        value = self.source[self.start+1:self.current-1]
-        self.addToken("STRING",value)
+        self.advance()
+        
+        value = self.source[self.start+1:self.current - 1]
+        
+        self.addToken(TokenType.STRING,value)
 
 
     def match(self, expected):
@@ -149,3 +203,23 @@ class Scanner:
     def advance(self):
         self.current += 1
         return self.source[self.current - 1]
+    
+    def printDetails(self):
+        
+        print(len(self.tokens))
+        
+        for token in self.tokens:
+            
+            print(f"type : {token.type} , lexeme : {token.lexeme} , literal : {token.literal}, ")
+    
+sc = Scanner("""
+khali a = 4;
+
+yla (a - 4 == 0) {
+    akteb("hello guys")
+}            
+""")
+
+sc.scanTokens()
+
+sc.printDetails()

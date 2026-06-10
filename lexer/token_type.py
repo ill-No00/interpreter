@@ -16,8 +16,8 @@ class TokenType(Enum):
     STAR = auto()            # *
 
     
-    BANG = auto()            # !
-    BANG_EQUAL = auto()      # !=
+    BANG = auto()            
+    BANG_EQUAL = auto()      
 
     EQUAL = auto()           # =
     EQUAL_EQUAL = auto()     # ==
