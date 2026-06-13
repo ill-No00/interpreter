@@ -1,13 +1,89 @@
+import sys
+import os
+
+sys.path.append(
+    os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))
+    )
+)
 
 
-class Exp:
-    ...
+from abc import ABC , abstractmethod
+from lexer.token_t import Token
+from lexer.token_type import TokenType
+
+
+class Visitor(ABC):
+    
+    @abstractmethod
+    def visitLiteral(self):
+        pass
+    
+    @abstractmethod
+    def visitBinary(self):
+        pass
+        
+    @abstractmethod
+    def visitUnary(self):
+        pass
+        
+    @abstractmethod
+    def visitGrouping(self):
+        pass
+        
+
+    
+        
+    
+
+class Exp(ABC):
+    
+    @abstractmethod
+    def accept(self , visitor):
+        pass
+    
+class AstPrinter(Visitor):
+    
+    def parenthesize(self , name ,*exps ):
+        
+        builder = f"({name}"
+    
+        for exp in exps : 
+            builder+= " "
+            builder+= exp.accept(self)
+            
+        builder += ")"
+        
+        return builder
+    
+    def print(self,exp):
+        return exp.accept(self)
+    
+    def visitLiteral(self,exp):
+        
+        if exp.value == None : 
+            return 'nil'
+        else:
+            return str(exp.value)
+
+    def visitUnary(self,exp):
+        
+        return self.parenthesize(exp.operator , exp.right)
+    
+    def visitBinary(self,exp):
+        return self.parenthesize(exp.operator , exp.right , exp.left)
+    
+    def visitGrouping(self,exp):
+        
+        return self.parenthesize("group" , exp.expression)
 
 class Literal(Exp):
     
     def __init__(self,value):
         self.value = value
     
+    def accept(self, visitor):
+        visitor.visitLiteral(self)
     
 
 
@@ -17,21 +93,39 @@ class Binary(Exp):
         self.left = left
         self.operator = operator
         self.right = right
+        
+    def accept(self, visitor):
+        visitor.visitBinary(self)
     
     
     
 class Unary(Exp):
     
-    def __init__(self,un,exp):
-        self.un = un
-        self.exp = exp 
+    def __init__(self,operator,right):
+        self.operator = operator
+        self.right = right
         
+    def accept(self, visitor):
+        visitor.visitUnary(self)
     
     
     
 class Grouping(Exp): 
     
     def __init__(self,exp):
-        self.exp = exp
+        self.expression = exp
     
-    
+    def accept(self, visitor):
+        visitor.visitGrouping(self)
+        
+expression = Binary(
+        Unary(
+            Token(TokenType.MINUS, "-", None, 1),
+            Literal(123)),
+            Token(TokenType.STAR, "*", None, 1),
+            Grouping(
+            Literal(45.67)));
+
+printer = AstPrinter()
+
+print(printer.print(expression))
