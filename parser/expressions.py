@@ -49,8 +49,12 @@ class AstPrinter(Visitor):
         builder = f"({name}"
     
         for exp in exps : 
+            print(f"exp :{exp}")
             builder+= " "
-            builder+= exp.accept(self)
+            added = exp.accept(self)
+            if added != None : 
+                builder+= added
+            
             
         builder += ")"
         
@@ -68,10 +72,10 @@ class AstPrinter(Visitor):
 
     def visitUnary(self,exp):
         
-        return self.parenthesize(exp.operator , exp.right)
+        return self.parenthesize(exp.operator.lexeme , exp.right)
     
     def visitBinary(self,exp):
-        return self.parenthesize(exp.operator , exp.right , exp.left)
+        return self.parenthesize(exp.operator.lexeme ,exp.left, exp.right)
     
     def visitGrouping(self,exp):
         
@@ -83,7 +87,7 @@ class Literal(Exp):
         self.value = value
     
     def accept(self, visitor):
-        visitor.visitLiteral(self)
+        return visitor.visitLiteral(self)
     
 
 
@@ -95,7 +99,7 @@ class Binary(Exp):
         self.right = right
         
     def accept(self, visitor):
-        visitor.visitBinary(self)
+        return visitor.visitBinary(self)
     
     
     
@@ -106,7 +110,7 @@ class Unary(Exp):
         self.right = right
         
     def accept(self, visitor):
-        visitor.visitUnary(self)
+        return visitor.visitUnary(self)
     
     
     
@@ -116,7 +120,7 @@ class Grouping(Exp):
         self.expression = exp
     
     def accept(self, visitor):
-        visitor.visitGrouping(self)
+        return visitor.visitGrouping(self)
         
 expression = Binary(
         Unary(
