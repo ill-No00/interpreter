@@ -7,8 +7,8 @@ sys.path.append(
     )
 )
 
-from token_t import Token
-from token_type import TokenType
+from lexer.token_t import Token
+from lexer.token_type import TokenType
 from parser.parser import Parser
 from parser.expressions import AstPrinter
 
@@ -223,20 +223,20 @@ class Scanner:
             
             print(f"type : {token.type} , lexeme : {token.lexeme} , literal : {token.literal}, ")
     
-sc = Scanner("""
-(3 + 4) * 2      
-""")
+#sc = Scanner("""
+#(3 + 4) * 2      
+#""")
 
-sc.scanTokens()
+#sc.scanTokens()
 
-sc.printDetails()
+#sc.printDetails()
 
-parser = Parser(sc.tokens)
+# parser = Parser(sc.tokens)
 
-exp = parser.parse()
+# exp = parser.parse()
 
-print(f"expression {exp}")
+# print(f"expression {exp}")
 
-printer = AstPrinter()
+# printer = AstPrinter()
 
-print(printer.print(exp))
+# print(printer.print(exp))

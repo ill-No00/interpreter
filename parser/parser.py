@@ -43,7 +43,7 @@ class Parser:
 
             expr = Binary(expr, operator, right)
             
-            print(f"Binary : {expr}")
+            
 
         return expr
 
@@ -102,8 +102,7 @@ class Parser:
         return self.primary()
 
     def primary(self):
-        print("we entered primary")
-        print(f"the current token being tested : {self.tokens[self.current]}")
+        
         if self.match(TokenType.FALSE):
             return Literal(False)
 
@@ -118,7 +117,7 @@ class Parser:
             return Literal(self.previous().literal)
 
         if self.match(TokenType.LEFT_PAREN):
-            print("it matches")
+            
             expr = self.expression()
 
             self.consume(
@@ -136,7 +135,7 @@ class Parser:
 
 
     def match(self, *types):
-        print(f"types : {types}")
+        
         for token_type in types:
             if self.check(token_type):
                 self.advance()
@@ -151,14 +150,7 @@ class Parser:
         raise self.error(self.peek(), message)
 
     def check(self, token_type):
-        print("peek type:", self.peek().type)
-        print("expected :", token_type)
-
-        print(type(self.peek().type))
-        print(type(token_type))
-
-        print(self.peek().type == token_type)
-
+        
         if self.is_at_end():
             return False
 
