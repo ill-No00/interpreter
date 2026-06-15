@@ -8,122 +8,213 @@ sys.path.append(
 )
 
 from lexer.token_type import TokenType
-from expressions import *
+from .expressions import *
 
 
-#equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+class ParseError(Exception):
+    pass
 
-#comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+
 class Parser:
-    
-    
-    def __init__(self,tokens):
+    def __init__(self, tokens):
         self.tokens = tokens
         self.current = 0
-        
+
+
+
+    def parse(self):
+        try:
+            return self.expression()
+        except ParseError:
+            return None
+
+
     def expression(self):
         return self.equality()
-    
+
     def equality(self):
-        
         expr = self.comparison()
-        
-        while self.match(TokenType.BANG_EQUAL,TokenType.EQUAL_EQUAL):
-            
+
+        while self.match(TokenType.BANG_EQUAL,
+                         TokenType.EQUAL_EQUAL):
+
             operator = self.previous()
-            right_expr = self.comparison()
+            right = self.comparison()
+
+            expr = Binary(expr, operator, right)
             
-            expr = Binary(expr,operator,right_expr)
-            
+            print(f"Binary : {expr}")
+
         return expr
 
     def comparison(self):
-        
         expr = self.term()
-        
-        while self.match(TokenType.GREATER,TokenType.LESS,TokenType.GREATER_EQUAL,TokenType.LESS_EQUAL):
-            
+
+        while self.match(
+            TokenType.GREATER,
+            TokenType.GREATER_EQUAL,
+            TokenType.LESS,
+            TokenType.LESS_EQUAL,
+        ):
+
             operator = self.previous()
-            right_expr = self.term()
-            
-            expr = Binary(expr,operator,right_expr)
-        
+            right = self.term()
+
+            expr = Binary(expr, operator, right)
+
         return expr
-    
+
     def term(self):
-        
         expr = self.factor()
-        
-        while self.match(TokenType.MINUS,TokenType.PLUS):
-            
+
+        while self.match(TokenType.PLUS,
+                         TokenType.MINUS):
+
             operator = self.previous()
-            right_expr = self.factor()
-            
-            expr = Binary(expr , operator, right_expr)
-    
+            right = self.factor()
+
+            expr = Binary(expr, operator, right)
+
         return expr
-    
+
     def factor(self):
-        
         expr = self.unary()
-        
-        while self.match(TokenType.STAR , TokenType.SLASH):
-            
+
+        while self.match(TokenType.STAR,
+                         TokenType.SLASH):
+
             operator = self.previous()
-            
-            right_expr = self.unary()
-            
-            expr = Binary(expr , operator, right_expr)
-            
+            right = self.unary()
+
+            expr = Binary(expr, operator, right)
+
         return expr
 
     def unary(self):
-        
-        if self.match(TokenType.MINUS , TokenType.BANG):
-            
+        if self.match(TokenType.BANG,
+                      TokenType.MINUS):
+
             operator = self.previous()
-            right_expr = self.unary()
-            return Unary(operator, right_expr)
-        
+            right = self.unary()
+
+            return Unary(operator, right)
+
         return self.primary()
-    
+
     def primary(self):
-        
+        print("we entered primary")
+        print(f"the current token being tested : {self.tokens[self.current]}")
         if self.match(TokenType.FALSE):
             return Literal(False)
-        elif self.match(TokenType.TRUE):
+
+        if self.match(TokenType.TRUE):
             return Literal(True)
-        elif self.match(TokenType.NIL):
+
+        if self.match(TokenType.NIL):
             return Literal(None)
-        elif self.match(TokenType.NUMBER,TokenType.STRING):
+
+        if self.match(TokenType.NUMBER,
+                      TokenType.STRING):
             return Literal(self.previous().literal)
-        elif self.match(TokenType.LEFT_PAREN):
+
+        if self.match(TokenType.LEFT_PAREN):
+            print("it matches")
             expr = self.expression()
-            self.consume(TokenType.RIGHT_PAREN)
+
+            self.consume(
+                TokenType.RIGHT_PAREN,
+                "Expect ')' after expression."
+            )
+
             return Grouping(expr)
-        
-    def consume(self):
-        
-        if not self.is_at_end():
-            pass
-    
-    def match(self, *matches):
-        
-        if self.is_at_end(): 
-            return False
-            
-        
-        if self.tokens[self.current].type in matches:
-            self.current += 1
-            return True
-            
+
+        raise self.error(
+            self.peek(),
+            "Expect expression."
+        )
+
+
+
+    def match(self, *types):
+        print(f"types : {types}")
+        for token_type in types:
+            if self.check(token_type):
+                self.advance()
+                return True
+
         return False
-        
+
+    def consume(self, token_type, message):
+        if self.check(token_type):
+            return self.advance()
+
+        raise self.error(self.peek(), message)
+
+    def check(self, token_type):
+        print("peek type:", self.peek().type)
+        print("expected :", token_type)
+
+        print(type(self.peek().type))
+        print(type(token_type))
+
+        print(self.peek().type == token_type)
+
+        if self.is_at_end():
+            return False
+
+        return self.peek().type == token_type
+
+    def advance(self):
+        if not self.is_at_end():
+            self.current += 1
+
+        return self.previous()
+
     def is_at_end(self):
-        
-        return self.tokens[self.current].type == "EOF" 
-        
-    
+        return self.peek().type == TokenType.EOF
+
+    def peek(self):
+        return self.tokens[self.current]
+
     def previous(self):
-        
         return self.tokens[self.current - 1]
+
+
+    def error(self, token, message):
+        if token.type == TokenType.EOF:
+            self.report(token.line,
+                         " at end",
+                         message)
+        else:
+            self.report(token.line,
+                         f" at '{token.lexeme}'",
+                         message)
+
+        return ParseError()
+
+    def report(self, line, where, message):
+        print(
+            f"[line {line}] Error{where}: {message}"
+        )
+
+    def synchronize(self):
+        self.advance()
+
+        while not self.is_at_end():
+
+            if self.previous().type == TokenType.SEMICOLON:
+                return
+
+            if self.peek().type in (
+                TokenType.CLASS,
+                TokenType.FUN,
+                TokenType.VAR,
+                TokenType.FOR,
+                TokenType.IF,
+                TokenType.WHILE,
+                TokenType.PRINT,
+                TokenType.RETURN,
+            ):
+                return
+
+            self.advance()

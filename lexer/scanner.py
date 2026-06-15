@@ -1,5 +1,16 @@
+import sys
+import os
+
+sys.path.append(
+    os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))
+    )
+)
+
 from token_t import Token
 from token_type import TokenType
+from parser.parser import Parser
+from parser.expressions import AstPrinter
 
 keywords = {
     "and": TokenType.AND,
@@ -213,13 +224,19 @@ class Scanner:
             print(f"type : {token.type} , lexeme : {token.lexeme} , literal : {token.literal}, ")
     
 sc = Scanner("""
-khali a = 4;
-
-yla (a - 4 == 0) {
-    akteb("hello guys")
-}            
+(3 + 4) * 2      
 """)
 
 sc.scanTokens()
 
 sc.printDetails()
+
+parser = Parser(sc.tokens)
+
+exp = parser.parse()
+
+print(f"expression {exp}")
+
+printer = AstPrinter()
+
+print(printer.print(exp))
