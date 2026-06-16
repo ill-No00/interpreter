@@ -1,4 +1,14 @@
 import sys
+import os   
+sys.path.append(
+    os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))
+    )
+)
+
+from interpreter.interpreter import Interpreter
+from lexer.scanner import Scanner
+from parser.parser import Parser
 
 
 
@@ -6,8 +16,11 @@ class Darija:
     
     
     
-    def __init__(self,hadError=False):
+    def __init__(self):
         args = sys.argv
+        self.hadError = False
+        self.interpreter = Interpreter()
+        self.hadRuntimeError = False
         if len(args) - 1 > 1:
             raise Exception("Too many arguments provided. Please provide only the file name.")
         elif len(args) - 1 == 1:
@@ -16,7 +29,18 @@ class Darija:
         else:
             self.fileName = None
             self.run_prompt()
-        self.hadError = hadError
+        
+        
+    def interpret(self,exp):
+        try:
+            
+            value = exp.accept(self.interpreter)
+            print(self.interpreter.stringify(value))
+        except RuntimeError as error:
+            print(error)
+            self.hadRuntimeError = True
+
+    
         
     
     def runFile(self):
@@ -29,15 +53,31 @@ class Darija:
             if self.hadError:
                 print("An error occurred. Exiting.")
                 sys.exit(65)
+            if self.hadRuntimeError:
+                print("A runtime error occurred. Exiting.")
+                sys.exit(70)
             
-            print(f"File content:\n{code}")
+            
     
     def run(self,input_code):
         
         if self.fileName:
             print(f"Running {self.fileName}...")
         
-        print(f"Input code:\n{input_code}")
+        
+        
+        scanner = Scanner(input_code)
+        scanner.scanTokens()
+        
+        parser = Parser(scanner.tokens)
+        exp = parser.parse()
+        
+        if exp is not None:
+            print("Parsed expression successfully.")    
+            self.interpret(exp)
+        else:
+            print("Parsing failed. No expression to interpret.")
+        
     
     def run_prompt(self):
         
@@ -61,5 +101,6 @@ class Darija:
         self.hadError = True
         
         
+
 lang = Darija()
 

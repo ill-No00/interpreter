@@ -217,11 +217,12 @@ class Scanner:
     
     def printDetails(self):
         
-        print(len(self.tokens))
         
-        for token in self.tokens:
+        if self.tokens :
+            for token in self.tokens : 
+                print(f"token : {token} , type : {token.type} , literal : {token.literal} , line : {token.line}")
             
-            print(f"type : {token.type} , lexeme : {token.lexeme} , literal : {token.literal}, ")
+            
     
 #sc = Scanner("""
 #(3 + 4) * 2      

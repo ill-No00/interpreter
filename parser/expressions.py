@@ -11,6 +11,7 @@ sys.path.append(
 from abc import ABC , abstractmethod
 from lexer.token_t import Token
 from lexer.token_type import TokenType
+from errors.runtimeError import RuntimeError
 
 
 class Visitor(ABC):
@@ -122,14 +123,4 @@ class Grouping(Exp):
     def accept(self, visitor):
         return visitor.visitGrouping(self)
         
-expression = Binary(
-        Unary(
-            Token(TokenType.MINUS, "-", None, 1),
-            Literal(123)),
-            Token(TokenType.STAR, "*", None, 1),
-            Grouping(
-            Literal(45.67)));
 
-printer = AstPrinter()
-
-print(printer.print(expression))
