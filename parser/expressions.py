@@ -14,7 +14,7 @@ from lexer.token_type import TokenType
 from errors.runtimeError import RuntimeError
 
 
-class Visitor(ABC):
+class Expr_Visitor(ABC):
     
     @abstractmethod
     def visitLiteral(self):
@@ -43,7 +43,7 @@ class Exp(ABC):
     def accept(self , visitor):
         pass
     
-class AstPrinter(Visitor):
+class AstPrinter(Expr_Visitor):
     
     def parenthesize(self , name ,*exps ):
         

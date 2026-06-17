@@ -8,7 +8,8 @@ sys.path.append(
 )
 
 
-from parser.expressions import Visitor
+from parser.expressions import Expr_Visitor
+from parser.statements import Stmt_Visitor
 from errors.runtimeError import RuntimeError
 from lexer.token_t import Token
 from lexer.token_type import TokenType
@@ -18,7 +19,32 @@ from lexer.token_type import TokenType
 
 
 
-class Interpreter(Visitor):
+class Interpreter(Expr_Visitor, Stmt_Visitor):
+    
+    def interpret(self,statements):
+        try:
+            
+            for statement in statements:
+                self.execute(statement)
+            
+        except RuntimeError as error:
+            print(error)
+            self.hadRuntimeError = True
+
+    def execute(self,stmt):
+        stmt.accept(self)
+    
+    def visitExpression(self,stmt):
+        value = self.evaluate(stmt.expression)
+        return None
+    
+    def visitPrint(self , stmt):
+        value = self.evaluate(stmt.expression)
+        print(self.stringify(value))
+        return None
+    
+    def evaluate(self,expr):
+        return expr.accept(self)
     
     def stringify(self, value):
         if value == None:
@@ -41,6 +67,7 @@ class Interpreter(Visitor):
         if isinstance(operand,str):
             return
         raise RuntimeError("Operand must be a string.", operand.token)
+    
 
     def visitLiteral(self,exp):
         return exp.value

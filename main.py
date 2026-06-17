@@ -31,17 +31,6 @@ class Darija:
             self.run_prompt()
         
         
-    def interpret(self,exp):
-        try:
-            
-            value = exp.accept(self.interpreter)
-            print(self.interpreter.stringify(value))
-        except RuntimeError as error:
-            print(error)
-            self.hadRuntimeError = True
-
-    
-        
     
     def runFile(self):
         
@@ -70,11 +59,11 @@ class Darija:
         scanner.scanTokens()
         
         parser = Parser(scanner.tokens)
-        exp = parser.parse()
+        statements = parser.parse()
         
-        if exp is not None:
+        if statements is not None:
             print("Parsed expression successfully.")    
-            self.interpret(exp)
+            self.interpreter.interpret(statements)
         else:
             print("Parsing failed. No expression to interpret.")
         
