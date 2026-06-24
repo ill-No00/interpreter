@@ -14,6 +14,14 @@ from lexer.token_type import TokenType
 from errors.runtimeError import RuntimeError
 
 
+# program        → statement* EOF ;
+
+# statement      → exprStmt
+#                | printStmt ;
+
+# exprStmt       → expression ";" ;
+# printStmt      → "print" expression ";" ;
+
 class Stmt_Visitor(ABC):
     
     @abstractmethod
