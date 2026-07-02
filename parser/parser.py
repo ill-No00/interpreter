@@ -9,7 +9,7 @@ sys.path.append(
 
 from lexer.token_type import TokenType
 from .expressions import *
-from .statements import Stmt , Print , Expression
+from .statements import Stmt , Print , Expression , Var
 
 
 class ParseError(Exception):
@@ -27,11 +27,33 @@ class Parser:
         try:
             statements = []
             while not self.is_at_end():
-                statements.append(self.statement())
+                statements.append(self.declaration())
             return statements
         except ParseError:
             return None
+    
+    def declaration(self):
+        try:
+            if self.match(TokenType.VAR) :
+                return self.varDeclaration()
+            return self.statement
+        except Exception as e:
+            self.synchronize()
+            return None
+        
+    def varDeclaration(self):
+        
+        name = self.consume(TokenType.IDENTIFIER , "Expect a variable name.")
+        
+        initializer = None
 
+        if self.match(TokenType.EQUAL):
+            initializer = self.expression()
+        
+        self.consume(TokenType.SEMICOLON , "Expect a semicolon.")
+        
+        return Var(name,initializer)
+    
     def statement(self):
         if self.match(TokenType.PRINT):
             return self.print_statement()
@@ -122,6 +144,7 @@ class Parser:
 
     def primary(self):
         
+        
         if self.match(TokenType.FALSE):
             return Literal(False)
 
@@ -130,6 +153,10 @@ class Parser:
 
         if self.match(TokenType.NIL):
             return Literal(None)
+        
+        if self.match(TokenType.IDENTIFIER):
+            
+            return Variable(self.previous())
 
         if self.match(TokenType.NUMBER,
                       TokenType.STRING):

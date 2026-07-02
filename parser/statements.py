@@ -59,3 +59,6 @@ class Print(Stmt):
 
     def accept(self, visitor):
         return visitor.visitPrint(self)
+
+class Var(Stmt):
+    pass
